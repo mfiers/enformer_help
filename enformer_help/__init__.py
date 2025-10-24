@@ -1,6 +1,8 @@
 # Few helper routines to ease running
 # enformer
 
+__version__ = "0.1.0"
+
 import hashlib
 import os
 from pathlib import Path
@@ -34,13 +36,21 @@ mouse_tracks = pd.read_pickle(cache_folder / './targets_mouse.pkl')
 human_tracks = pd.read_pickle(cache_folder / './targets_human.pkl')
 
 
-def search_tracks(keyword):
+def search_tracks(keyword, data=False):
     """
     Helper function to search through available tracks.
     """
+
     m = mouse_tracks[mouse_tracks['description'].str.lower().str.contains(keyword.lower())]
     h = human_tracks[human_tracks['description'].str.lower().str.contains(keyword.lower())]
     cols = "index description".split()
+
+    if data:
+        rv = {}
+        rv['mouse'] = m
+        rv['human'] = h
+        return rv
+    
     if len(m[cols]) > 0:
         print(f"## Mouse (total tracks: {mouse_tracks.shape[0]})")
         print(m[cols].head())
@@ -100,7 +110,7 @@ def getseq(region='chr19:44,900,254-44,911,047', genome='hg19', length=196_608,
 PREP = False
 
 if PREP:
-    ENFORMER = from_pretrained('/mnt/storage/data/huggingface/hub/enformer', use_tf_gamma=True)
+    ENFORMER = from_pretrained('/data/teachers/software/enformer_help/cache/hub/enformer', use_tf_gamma=True)
 else:
     ENFORMER = None
 
@@ -128,6 +138,45 @@ def run_enformer_prep(sequence):
             pickle.dump(output_seq, F)
 
 
+ENFO=None
+
+def run_enformer_keep_in_memory(sequence, silent=True):
+
+    # get hash
+    sha = hashlib.sha256(sequence.encode('utf-8')).hexdigest()
+    # cache_file
+    cache_file = enf_cache / f"{sha}.pkl.gz"    
+
+    if cache_file.exists():
+        if not silent:
+            print('Returning pre-cached enformer object')
+        with gzip.open(cache_file, 'rb') as F:
+            return pickle.load(F)
+        
+    global ENFO
+    if ENFO is None:
+        if not silent:
+            print('Loading enformer into memory')
+        ENFO = from_pretrained('/data/teachers/software/enformer_help/cache/hub/enformer', use_tf_gamma=True)
+
+    if not silent:
+        print("Preparing tensor")
+    tensor_seq = seq_indices_to_one_hot(str_to_seq_indices(sequence).unsqueeze(0))
+
+    if not silent:
+        print('Execute enformer')
+    output_seq = ENFO(tensor_seq)
+
+    del tensor_seq
+    if not silent:
+        print("Ready!")
+
+    # save to cache - but only if we have write permissions:
+    if os.access(enf_cache, os.W_OK):
+        with gzip.open(cache_file, 'wb') as F:
+            pickle.dump(output_seq, F)
+
+    return output_seq
 
 def run_enformer(sequence):
 
@@ -142,7 +191,7 @@ def run_enformer(sequence):
             return pickle.load(F)
         
     print('Loading enformer into memory')
-    enformer = from_pretrained('/mnt/storage/data/huggingface/hub/enformer', use_tf_gamma=True)
+    enformer = from_pretrained('/data/teachers/software/enformer_help/cache/hub/enformer', use_tf_gamma=True)
 
     print("Preparing tensor")
     tensor_seq = seq_indices_to_one_hot(str_to_seq_indices(sequence).unsqueeze(0))
@@ -164,7 +213,7 @@ def run_enformer(sequence):
 
 # easiest way to check if something happenend is by plotting
 # so here is a plot helper function:
-def trackplot(title, track, snp_pos):
+def trackplot(title, track, snp_pos=None):
     dat = pd.DataFrame(dict(y=track.detach().numpy()))
     dat['i'] = range(len(dat))
     dat['x'] = dat['i'] * 128 + snp_pos - 57344
@@ -172,8 +221,9 @@ def trackplot(title, track, snp_pos):
     ax = plt.gca()
     dat.plot.scatter(x='x', y='y', s=8, c='k', ax=ax)
     midy = (dat['y'].max() - dat['y'].min()) / 2 + dat['y'].min()
-    ax.axvline(snp_pos, zorder=-1, c='grey')
-    ax.text(snp_pos, midy, ' snp', va='top')
-    ax.axvline(139440238, zorder=-1, c='red', alpha=0.5)
-    ax.text(139440238, midy, '<- NOTCH1 ', ha='right', va='top')
+    if snp_pos is not None:
+        ax.axvline(snp_pos, zorder=-1, c='grey')
+        ax.text(snp_pos, midy, ' snp', va='top')
+    #ax.axvline(139440238, zorder=-1, c='red', alpha=0.5)
+    #ax.text(139440238, midy, '<- NOTCH1 ', ha='right', va='top')
     plt.title(title)
