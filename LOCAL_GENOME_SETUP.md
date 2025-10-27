@@ -239,9 +239,11 @@ seq = enformer_help.getseq('chr1:1000000-1000100', genome='hg19')
 ### Installation
 
 ```bash
+# Install pysam if needed
 pip install pysam>=0.15.0
 
-# Or reinstall package
+# Install package locally in editable mode
+cd /data/teachers/software/enformer_help
 pip install -e .
 ```
 

@@ -237,7 +237,9 @@ def run_enformer(sequence):
 
 # easiest way to check if something happenend is by plotting
 # so here is a plot helper function:
-def trackplot(title, track, snp_pos=None):
+def trackplot(title, track, snp_pos=None,
+              marks = None):
+
     dat = pd.DataFrame(dict(y=track.detach().numpy()))
     dat['i'] = range(len(dat))
     dat['x'] = dat['i'] * 128 + snp_pos - 57344
@@ -248,6 +250,11 @@ def trackplot(title, track, snp_pos=None):
     if snp_pos is not None:
         ax.axvline(snp_pos, zorder=-1, c='grey')
         ax.text(snp_pos, midy, ' snp', va='top')
-    #ax.axvline(139440238, zorder=-1, c='red', alpha=0.5)
-    #ax.text(139440238, midy, '<- NOTCH1 ', ha='right', va='top')
+
+    if marks is not None:
+        for pos, col, name in marks:
+            ax.axvline(pos, zorder=-1, c=col, alpha=0.5)
+            ax.text(pos, midy, f' {name} ', ha='right', va='top')
+            #19440238
+
     plt.title(title)

@@ -1,6 +1,6 @@
 # EnformerHelp
 
-A Python library providing helper functions to run and cache [Enformer](https://www.nature.com/articles/s41592-021-01252-x) genomic predictions with integrated UCSC genome browser support.
+A Python library providing helper functions to run and cache [Enformer](https://www.nature.com/articles/s41592-021-01252-x) genomic predictions with local genome file support.
 
 ## Features
 
@@ -13,30 +13,30 @@ A Python library providing helper functions to run and cache [Enformer](https://
 
 ## Installation
 
-### Using pip
+⚠️ **This package is not on PyPI - install locally only**
 
 ```bash
+<<<<<<< Updated upstream
 pip install enformer_help
+=======
+cd /data/teachers/software/enformer_help
+pip install -e .
+>>>>>>> Stashed changes
 ```
 
-### Development Installation
+### ⚠️ Import Name is Different!
 
-This project uses [Hatch](https://hatch.pypa.io/) for project management. To set up a development environment:
+```python
+# ✅ CORRECT
+import enformer_help
 
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/enformer_help.git
-cd enformer_help
-
-# Install hatch if you don't have it
-pip install hatch
-
-# Create and activate development environment
-hatch shell
-
-# Or run commands directly
-hatch run test
+# ❌ WRONG
+import enformerhelp
 ```
+
+**Why?** Package name is `enformerhelp` but module directory is `enformer_help/`
+
+📖 **See [INSTALL.md](INSTALL.md) for detailed installation instructions**
 
 ## Requirements
 
@@ -59,22 +59,23 @@ hatch run test
 ## Quick Start
 
 ```python
-from enformer_help import getseq, run_enformer, search_tracks, trackplot
+# Import with underscore!
+import enformer_help
 
 # Search for available genomic tracks
-search_tracks("h3k27ac")
+enformer_help.search_tracks("h3k27ac")
 
-# Retrieve a DNA sequence from UCSC
-sequence = getseq(
+# Retrieve a DNA sequence from local genome file
+sequence = enformer_help.getseq(
     region='chr19:44,900,254-44,911,047',
     genome='hg19'
 )
 
 # Run Enformer prediction (with caching)
-output = run_enformer(sequence)
+output = enformer_help.run_enformer(sequence)
 
 # Visualize results
-trackplot(
+enformer_help.trackplot(
     title="H3K27ac predictions",
     track=output['human'][0, :, 123],  # Example track
     snp_pos=44905650

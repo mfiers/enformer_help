@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "enformerhelp"
 version = "0.1.0"
-description = "Helper functions to cache and run Enformer genomic predictions"
+description = "Helper functions to cache and run Enformer genomic predictions (import as: enformer_help)"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
@@ -53,10 +53,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/enformer_help"
-Documentation = "https://github.com/yourusername/enformer_help#readme"
-Repository = "https://github.com/yourusername/enformer_help"
-Issues = "https://github.com/yourusername/enformer_help/issues"
+Homepage = "file:///data/teachers/software/enformer_help"
+Documentation = "file:///data/teachers/software/enformer_help/README.md"
+Repository = "file:///data/teachers/software/enformer_help"
 
 [tool.hatch.version]
 path = "enformer_help/__init__.py"
