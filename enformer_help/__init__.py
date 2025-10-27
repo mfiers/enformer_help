@@ -13,8 +13,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# To interact with UCSC, get sequence data
-from ucsc.api import Hub, Genome, Track, TrackSchema, Chromosome, Sequence  
+# For reading local genome files
+import pysam
 
 # Run enformer
 from enformer_pytorch import Enformer, from_pretrained, str_to_one_hot, seq_indices_to_one_hot
@@ -27,9 +27,18 @@ enf_cache = cache_folder / 'enformer'
 
 if not dna_cache.exists():
     dna_cache.mkdir()
-    
+
 if not enf_cache.exists():
     enf_cache.mkdir()
+
+# Local genome file paths
+GENOME_PATHS = {
+    'hg19': '/data/db/genomes/hg19/fasta/hg19.fa',
+    'hg38': '/data/db/genomes/hg38/fasta/hg38.fa',  # Add other genomes as needed
+}
+
+# Cache for pysam FastaFile objects to avoid reopening
+_FASTA_CACHE = {}
 
 
 mouse_tracks = pd.read_pickle(cache_folder / './targets_mouse.pkl')
@@ -63,10 +72,10 @@ def search_tracks(keyword, data=False):
 def getseq(region='chr19:44,900,254-44,911,047', genome='hg19', length=196_608,
            silent=False):
     """
-    Retrieve sequence from the UCSC genome browser
-    
+    Retrieve sequence from local genome file
+
     Given that Enformer requires a window of exactly 196,608 nucleotides
-    this code grows (or shrinks) the requested window to exactly that 
+    this code grows (or shrinks) the requested window to exactly that
     size around the center of the requested area.
     """
     chrom, coords = region.strip().split(':')
@@ -78,7 +87,7 @@ def getseq(region='chr19:44,900,254-44,911,047', genome='hg19', length=196_608,
         print(f"Requested coordinates {chrom} from {start:_d} to "
               f"{stop:_d} of length: {stop - start + 1:_d}")
 
-    
+
     # grow (or shrink) so we get a block of 196,608 exactly
     center = ( (stop - start) // 2 ) + start
     new_start = center - (196_608 // 2)
@@ -95,9 +104,24 @@ def getseq(region='chr19:44,900,254-44,911,047', genome='hg19', length=196_608,
     if cache_file.exists():
         with gzip.open(cache_file, 'rb') as F:
             return pickle.load(F)
-        
-    seq = Sequence.get(genome = genome, chrom=chrom, start=new_start, end=new_stop)
-    dna = seq.dna.upper()
+
+    # Get sequence from local genome file using pysam
+    if genome not in GENOME_PATHS:
+        raise ValueError(f"Genome '{genome}' not configured. Available: {list(GENOME_PATHS.keys())}")
+
+    genome_path = GENOME_PATHS[genome]
+    if not os.path.exists(genome_path):
+        raise FileNotFoundError(f"Genome file not found: {genome_path}")
+
+    # Use cached FastaFile object if available
+    if genome not in _FASTA_CACHE:
+        _FASTA_CACHE[genome] = pysam.FastaFile(genome_path)
+
+    fasta = _FASTA_CACHE[genome]
+
+    # Both pysam and the cache use 0-based half-open coordinates [start, end)
+    # new_start and new_stop are already in this format
+    dna = fasta.fetch(chrom, new_start, new_stop).upper()
 
     # save to cache - but only if we have write permissions:
     if os.access(dna_cache, os.W_OK):
