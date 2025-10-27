@@ -202,7 +202,7 @@ def run_enformer_keep_in_memory(sequence, silent=True):
 
     return output_seq
 
-def run_enformer(sequence):
+def run_enformer(sequence, silent=False):
 
     # get hash
     sha = hashlib.sha256(sequence.encode('utf-8')).hexdigest()
@@ -210,22 +210,28 @@ def run_enformer(sequence):
     cache_file = enf_cache / f"{sha}.pkl.gz"    
 
     if cache_file.exists():
-        print('Returning pre-cached enformer object')
+        if not silent:
+            print('Returning pre-cached enformer object')
         with gzip.open(cache_file, 'rb') as F:
             return pickle.load(F)
         
-    print('Loading enformer into memory')
+    if not silent:
+        print('Loading enformer into memory')
     enformer = from_pretrained('/data/teachers/software/enformer_help/cache/hub/enformer', use_tf_gamma=True)
 
-    print("Preparing tensor")
+    if not silent:
+        print("Preparing tensor")
     tensor_seq = seq_indices_to_one_hot(str_to_seq_indices(sequence).unsqueeze(0))
 
-    print('Execute enformer')
+    if not silent:
+        print('Execute enformer')
     output_seq = enformer(tensor_seq)
 
-    print("Clean up memory")
+    if not silent:
+        print("Clean up memory")
     del enformer, tensor_seq
-    print("Ready!")
+    if not silent:
+        print("Ready!")
 
     # save to cache - but only if we have write permissions:
     if os.access(enf_cache, os.W_OK):
