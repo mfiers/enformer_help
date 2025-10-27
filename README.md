@@ -16,7 +16,7 @@ A Python library providing helper functions to run and cache [Enformer](https://
 ### Using pip
 
 ```bash
-pip install enformerhelp
+pip install enformer_help
 ```
 
 ### Development Installation
