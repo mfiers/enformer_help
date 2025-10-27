@@ -4,11 +4,12 @@ A Python library providing helper functions to run and cache [Enformer](https://
 
 ## Features
 
-- **Smart Sequence Retrieval**: Automatically fetch DNA sequences from UCSC genome browser with automatic window sizing to Enformer's 196,608 bp requirement
+- **Smart Sequence Retrieval**: Automatically fetch DNA sequences from local genome files with automatic window sizing to Enformer's 196,608 bp requirement
 - **Intelligent Caching**: SHA256-based caching for both DNA sequences and Enformer predictions to avoid redundant computations
 - **Track Search**: Search and explore genomic tracks across mouse and human genomes
 - **Visualization**: Built-in plotting utilities for genomic predictions with SNP and gene annotations
-- **Memory Efficient**: Lazy loading of the Enformer model with automatic cleanup
+- **Memory Efficient**: Lazy loading of both genome files and the Enformer model with automatic cleanup
+- **Local Genome Support**: Uses local FASTA files via pysam (no API rate limits!)
 
 ## Installation
 
@@ -43,14 +44,17 @@ hatch run test
 - pandas >= 1.3.0
 - matplotlib >= 3.3.0
 - seaborn >= 0.11.0
-- ucsc-api >= 0.1.0
+- pysam >= 0.15.0
 - enformer-pytorch >= 0.1.0
 - torch >= 1.9.0
 
 ### External Data Requirements
 
 - Pre-computed track files: `cache/targets_mouse.pkl` and `cache/targets_human.pkl`
-- Enformer model weights (configurable path, default: `/mnt/storage/data/huggingface/hub/enformer`)
+- Enformer model weights (configurable path, default: `/data/teachers/software/enformer_help/cache/hub/enformer`)
+- Local genome FASTA files (indexed):
+  - hg19: `/data/db/genomes/hg19/fasta/hg19.fa`
+  - hg38: `/data/db/genomes/hg38/fasta/hg38.fa` (add as needed)
 
 ## Quick Start
 
